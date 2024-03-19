@@ -1,6 +1,70 @@
 # import collections, functools, operator
 from whist import entrada, impresion, logica
 
+from dataclasses import dataclass
+from enum import IntEnum, StrEnum, auto
+from interaccion import IO
+
+class Palo(StrEnum):
+    PICA = '♠️'
+    TREBOL = '♣️'
+    CORAZON = '♥️'
+    DIAMANTE = '♦️'
+    
+class Valor(IntEnum):
+    DOS = 2
+    TRES = auto()
+    CUATRO = auto()
+    CINCO = auto()
+    SEIS = auto()
+    SIETE = auto()
+    OCHO = auto()
+    NUEVE = auto()
+    DIEZ = auto()
+    J = auto()
+    Q = auto()
+    K = auto()
+    A = auto()
+
+    def __str__(self) -> str:
+        match self:
+            case Valor.J: return "J"
+            case Valor.Q: return "Q"
+            case Valor.K: return "K"
+            case Valor.A: return "A"
+            case _: return super().__str__()
+
+@dataclass(order=True)
+class Carta:
+    valor: Valor
+    palo: Palo
+
+@dataclass
+class Mano:
+    cant_bazas: int
+    triunfo: Carta
+
+class Jugador:
+    nombre: str
+    conexion: IO
+    cartas: list[Carta]
+
+    def __init__(self, nombre: str, conexion: IO) -> None:
+        self.nombre = nombre
+        self.conexion = conexion
+
+    def asignar_cartas(self, cartas: list[Carta]) -> None:
+        # Supongo que podría hacerse un chequeo.
+        self.cartas = cartas
+
+    def obtener_prediccion(self) -> int:
+        return self.conexion.obtener_prediccion()
+    
+    def obtener_jugada(self) -> Carta:
+        jugada = self.conexion.obtener_jugada(self.cartas)
+        self.cartas.remove(jugada)
+        return jugada
+
 def whist(orden_jugadores: "list[str]") -> tuple:
     """ Permite jugar una partida de Whist. Maneja la entrada y salida del juego.
         Devuelve una tupla con los ganadores y el puntaje con el que ganaron. 
