@@ -1,5 +1,5 @@
 from io_interfaz import IO_interfaz, IO_jugador
-from whist import Jugador, Carta, Mano
+from whist import Jugador, Carta
 import random
 
 def clear() -> None:

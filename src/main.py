@@ -1,5 +1,5 @@
 # import collections, functools, operator
-from whist import Jugador, Palo, Valor, Carta, determinar_ganador_juego, obtener_nuevo_puntaje
+from whist import Jugador, Palo, Valor, Carta, determinar_ganador_juego, determinar_ganador_baza, actualizar_orden_jugadores
 from io_interfaz import IO_interfaz
 from terminal import Terminal as IO
 import random
@@ -30,10 +30,6 @@ def whist(interfaz: IO_interfaz, orden_jugadores: list[Jugador]) -> tuple[int, l
         except Exception: print("🤷")
         orden_jugadores = orden_jugadores[1:] + [orden_jugadores[0]]  # Rotar lista de jugadores
 
-        # obtener_nuevo_puntaje(puntos_juego, bazas_ganadas, predicciones)
-        # try: interfaz.mostrar_puntajes(puntos_mano, puntos_juego)
-        # except Exception: print("🤷")
-        
     return determinar_ganador_juego(puntos_juego)
 
 def repartir_cartas(interfaz: IO_interfaz,
@@ -58,57 +54,39 @@ def repartir_cartas(interfaz: IO_interfaz,
 
 # Removí un argumento, el de las cartas de los jugadores
 def obtener_bazas_ganadas(interfaz: IO_interfaz,
-                          mano: Mano,
+                          nro_mano: int,
+                          triunfo: Carta,
+                          predicciones: dict[Jugador, int],
                           orden_jugadores: list[Jugador]) -> dict[Jugador, int]:
-        """ Permite jugar una mano del juego. Maneja la entrada y la salida al usuario.
-        Devuelve los puntos que se realizaron en la mano. """
+    """ Permite jugar una mano del juego. Maneja la entrada y la salida al usuario.
+    Devuelve los puntos que se realizaron en la mano. """
 
-        bazas_ganadas = dict.fromkeys(orden_jugadores, int(0))
+    bazas_ganadas = dict.fromkeys(orden_jugadores, int(0))
+    mesa = list()
 
-        for baza in range(mano.cant_bazas):
-            mesa = dict()
-            carta_baza = tuple()
-            for numero, jugador in enumerate(orden_jugadores):
-                cartas_jugador: list = cartas_jugadores[jugador]
-                impresion.imprimir_seleccion_carta(triunfo, mesa, jugador, cartas_jugador, predicciones)
+    for baza in range(nro_mano):
+        for jugador in orden_jugadores:
+            try: mesa += interfaz.obtener_jugada_valida()
+            except Exception: print("🤷")
+        ganador_baza = determinar_ganador_baza(mesa, orden_jugadores, triunfo)
+        bazas_ganadas[ganador_baza] += 1
+        orden_jugadores = actualizar_orden_jugadores(orden_jugadores, ganador_baza)
+        interfaz.mostrar_ganador_baza(mesa, orden_jugadores)
+    return bazas_ganadas
 
-                jugada = obtener_jugada_valida(jugador, cartas_jugador, carta_baza, triunfo)
-                if numero == 0:
-                    carta_baza = jugada
-                cartas_jugador.remove(jugada)
-                cartas_jugadores[jugador] = cartas_jugador
-                mesa[jugada] = jugador
-                if numero != len(orden_jugadores)-1:
-                    impresion.imprimir_transicion(orden_jugadores[numero+1])
-                    
-            ganador_baza = logica.determinar_ganador_baza(mesa, carta_baza, triunfo)
-            bazas_ganadas[ganador_baza] += 1
-            orden_jugadores = logica.actualizar_orden_jugadores(orden_jugadores, ganador_baza)
+def obtener_nuevo_puntaje(interfaz: IO_interfaz,
+                          puntos_juego: dict[Jugador, int],
+                          bazas_ganadas: dict[Jugador, int],
+                          predicciones: dict[Jugador, int]
+                          ) -> dict[Jugador, int]:
+    puntos_mano = dict()
+    for jugador in puntos_juego:
+        puntos_mano[jugador] = bazas_ganadas[jugador] + (10 if bazas_ganadas[jugador] == predicciones[jugador] else 0)
+        puntos_juego[jugador] += puntos_mano[jugador]
 
-            impresion.imprimir_ganador_baza(triunfo, mesa, ganador_baza)
-            if baza < numero_bazas-1:
-                impresion.imprimir_transicion(orden_jugadores[0])
-        puntos_mano = logica.determinar_puntos_mano(bazas_ganadas, predicciones)
-        return puntos_mano
+    try: interfaz.mostrar_puntajes(jugador, puntos_mano, puntos_juego)
+    except Exception: print("🤷")
+    return puntos_juego
 
 if __name__ == "__main__":
     main()
-
-"""
-    Qué abstracción queremos hacer?
-    Quiero separar todo lo que pueda la lógica de su forma de interactuar.
-    Quisiera encapsular de la forma más perfecta posible conjuntos y funciones que permitan jugar al whist.
-    De esta forma puedo conseguir la construcción más correcta del juego.
-
-    Luego tenemos una interfaz común para todos. Supongamos cada uno una dirección en una computadora.
-    El programa es en realidad un cliente y un servidor, para poder manejar la lógica propia del juego y la de un boludo manejando la maquinita.
-
-    2 formas: servidor sin clientes.
-    Puede haber un servidor sin clientes? Sí, estaría esperando. Ahora bien, quien usa el programa siempre es el cliente.
-    Nadie "usa" el servidor.
-    El servidor debería recibir al menos un cliente como argumento.
-    
-    Aunque pensandolo por otro lado. Si quiero hacerlo perfecto, en vez de hacerlo programa lo hago
-    código concurrente de otro módulo.
-    Luego que main se encargue de brindar el acceso a los usuarios y boludeces. Como lo estuve haciendo.
- """

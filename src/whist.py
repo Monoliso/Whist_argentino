@@ -34,6 +34,10 @@ class Valor(IntEnum):
 class Carta:
     valor: Valor
     palo: Palo
+    
+    def __repr__(self):
+        # return f"Carta(valor={self.valor.name}, palo={self.palo.name})"
+        return f"Carta({self.valor.name}, \"{self.palo.value}\")"
 
 @dataclass
 class Jugador:
@@ -42,24 +46,19 @@ class Jugador:
     def __hash__(self):
         return hash(str(self.nombre))
 
-@dataclass
-class Mano:
-    """ Invariantes de una mano. """
-    cant_bazas: int
-    triunfo: Carta
-    predicciones: dict[Jugador, int]
+def determinar_ganador_baza(mesa: list[Carta], jugadores: list[Jugador], triunfo: Carta) -> Jugador:
+    """ Devuelve el jugador que ganó la baza. """
+    
+    baza_palo = mesa[0].palo
+    def comparar_cartas(carta: Carta):
+        if carta.palo == triunfo.palo: return (2, carta.valor)
+        if carta.palo == baza_palo: return (1, carta.valor)
+        return (0, carta.valor)
 
-
-def obtener_nuevo_puntaje(puntos_juego: dict[Jugador, int],
-                          bazas_ganadas: dict[Jugador, int],
-                          predicciones: dict[Jugador, int]
-                          ) -> dict[Jugador, int]:
-    for jugador in puntos_juego:
-        if(bazas_ganadas[jugador] == predicciones[jugador]):
-            puntos_juego[jugador] += (10 + bazas_ganadas[jugador])
-        else: 
-            puntos_juego[jugador] += bazas_ganadas[jugador]
-    return puntos_juego
+    # max_index, _ = max(enumerate(mesa), key=lambda x: comparar_cartas(x[1]))
+    # return jugadores[max_index]
+    ganador, _ = max(zip(jugadores, mesa), key=lambda x: comparar_cartas(x[1]))
+    return ganador
 
 def determinar_ganador_juego(puntaje_juego: dict[Jugador, int]) -> tuple[int, list[Jugador]]:
     """ Devuelve el o los jugadores con mayor puntaje. """
@@ -67,3 +66,10 @@ def determinar_ganador_juego(puntaje_juego: dict[Jugador, int]) -> tuple[int, li
     mayor_puntaje = max(puntaje_juego.values())
     ganador_es: list[Jugador] = [jugador for jugador, puntaje in puntaje_juego.items() if puntaje == mayor_puntaje]
     return mayor_puntaje, ganador_es
+
+def actualizar_orden_jugadores(jugadores: list[Jugador], ganador_baza: Jugador) -> list[Jugador]:
+    """ Devuelve una lista con el orden actualizado de los jugadores en una mano. """
+
+    numero_ganador = jugadores.index(ganador_baza)
+    nueva_lista = jugadores[numero_ganador:] + jugadores[:numero_ganador]
+    return nueva_lista

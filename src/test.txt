@@ -1,0 +1,5 @@
+# Test
+valores = list(Valor)
+palos = list(Palo)
+rd = [Carta(random.choice(valores), random.choice(palos)) for _ in range(5)]
+jugadores = [Jugador("Luca"), Jugador("Mateo"), Jugador("Andres"), Jugador("Laureano"), Jugador("Nicolas")]

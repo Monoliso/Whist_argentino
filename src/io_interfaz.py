@@ -16,16 +16,6 @@ class IO_interfaz(ABC):
     @abstractmethod
     def obtener_jugadores(self) -> list[Jugador]:
         ...
-
-    @abstractmethod
-    def obtener_predicciones(self,
-                             triunfo: Carta,
-                             cartas_jugadores: dict[Jugador, list[Carta]],
-                             jugadores: list[Jugador]) -> dict[Jugador, int]:
-        """ Dado el triunfo de la baza, las cartas de los jugadores, y el orden para
-        solicitar cada prediccion, esta función se encarga de mostrarle a cada uno
-        la información pertinente para que pueda realizar la prediccion de la mano. """
-        ...
     
     @abstractmethod
     def mostrar_ganador_es(self, puntaje: int, ganadores: list[Jugador], jugadores: list[Jugador]) -> None:
